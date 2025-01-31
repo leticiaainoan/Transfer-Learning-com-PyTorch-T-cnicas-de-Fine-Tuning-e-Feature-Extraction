@@ -1,0 +1,13 @@
+#carregar o modelo com os parâmetros do ImageNet
+vgg16 = models.vgg16(pretrained=True)
+
+#eliminar o "topo" do modelo
+vgg16.classifier = torch.nn.Identity()
+
+#adicionar uma camada flatten
+vgg16.flatten = nn.Flatten()
+
+print(vgg16)
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+vgg16 = vgg16.to(device)
