@@ -1,0 +1,55 @@
+try:
+    import google.colab
+    import requests
+    url = 'https://raw.githubusercontent.com/dvgodoy/PyTorchStepByStep/master/config.py'
+    r = requests.get(url, allow_redirects=True)
+    open('config.py', 'wb').write(r.content)
+except ModuleNotFoundError:
+    pass
+
+from config import *
+config_chapter7()
+# This is needed to render the plots in this chapter
+from plots.chapter7 import *
+
+import numpy as np
+from PIL import Image
+
+import torch
+import torch.optim as optim
+import torch.nn as nn
+import torch.nn.functional as F
+
+from torch.utils.data import DataLoader, Dataset, random_split, TensorDataset, Subset
+from torchvision.transforms.v2 import Compose, ToImage, Normalize, \
+Resize, ToPILImage, CenterCrop, RandomResizedCrop, ToDtype
+from torchvision.datasets import ImageFolder
+from torchvision.models import alexnet, resnet18, inception_v3
+
+
+import torchvision.models as models
+import torchvision.transforms as transforms
+
+# Updated for Torchvision 0.15
+from torchvision.models.alexnet import AlexNet_Weights
+from torchvision.models.inception import Inception_V3_Weights
+from torchvision.models.resnet import ResNet18_Weights
+# from torchvision.models.alexnet import model_urls
+
+try:
+    from torchvision.models.utils import load_state_dict_from_url
+except ImportError:
+    from torch.hub import load_state_dict_from_url
+
+from stepbystep.v3 import StepByStep
+from data_generation.rps import download_rps
+
+import warnings
+warnings.filterwarnings('ignore')
+
+import numpy as np
+import torch
+from torch import nn, optim
+from torchvision import datasets, transforms
+from torch.utils.data import DataLoader, random_split
+import matplotlib.pyplot as plt
