@@ -4,6 +4,7 @@ aborda o uso de Transfer Learning com a arquitetura VGG16, aplicando técnicas d
 O conteúdo completo está na nos artigos do do Medium nos links a seguir:
 
 https://medium.com/@leticia.sousa.057/explorandotransfer-learning-com-pytorch-técnicas-de-fine-tuning-e-feature-extraction-para-modelos-905e49e1eceb
+
 https://medium.com/@pedro.rici.064/classificação-de-tumor-em-cérebro-em-imagens-de-mri-usando-transfer-learning-aa19f3e9d0ba
 
 
