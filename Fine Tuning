@@ -1,0 +1,97 @@
+# 1. Adicionar uma nova camada classificadora
+vgg16.classifier = nn.Sequential(
+    nn.Linear(512 * 7 * 7, 256),
+    nn.ReLU(),
+    nn.Dropout(0.5),
+    nn.Linear(256, 1),  # Saída binária (tumor ou não tumor)
+    nn.Sigmoid()
+)
+
+# 2. Congelar as camadas iniciais
+for param in vgg16.features.parameters():
+    param.requires_grad = False  # Congela as camadas de features
+
+# 3. Definir a função de perda e o otimizador
+criterion = nn.BCELoss()  # Binary Cross Entropy Loss para classificação binária
+optimizer = optim.Adam(vgg16.classifier.parameters(), lr=0.001)  # Otimizador apenas para a camada classificadora
+
+# 4. Treinar apenas a nova camada classificadora
+num_epochs =5  # Número de épocas para o treinamento inicial
+for epoch in range(num_epochs):
+    vgg16.train()  # Coloca o modelo em modo de treinamento
+    running_loss = 0.0
+    for images, labels in MRI_dataloader:
+        # Zerar os gradientes
+        optimizer.zero_grad()
+
+        # Forward pass
+        outputs = vgg16(images)
+        loss = criterion(outputs.squeeze(), labels.float())
+
+        # Backward pass e otimização
+        loss.backward()
+        optimizer.step()
+
+        running_loss += loss.item()
+
+    print(f"Epoch {epoch+1}/{num_epochs}, Loss: {running_loss/len(MRI_dataloader)}")
+
+# 5. Descongelar todas as camadas e ajustar o modelo inteiro
+for param in vgg16.parameters():
+    param.requires_grad = True  # Descongela todas as camadas
+
+# 6. Ajustar a taxa de aprendizado para o Fine-Tuning
+optimizer = optim.Adam(vgg16.parameters(), lr=0.0001)  # Taxa de aprendizado menor
+
+# 7. Continuar o treinamento com todas as camadas
+num_epochs_finetune = 5  # Número de épocas para o Fine-Tuning
+for epoch in range(num_epochs_finetune):
+    vgg16.train()
+    running_loss = 0.0
+    for images, labels in MRI_dataloader:
+        optimizer.zero_grad()
+        outputs = vgg16(images)
+        loss = criterion(outputs.squeeze(), labels.float())
+        loss.backward()
+        optimizer.step()
+        running_loss += loss.item()
+
+    print(f"Fine-Tuning Epoch {epoch+1}/{num_epochs_finetune}, Loss: {running_loss/len(MRI_dataloader)}")
+
+import torch
+from sklearn.metrics import confusion_matrix, accuracy_score
+import numpy as np
+
+# Função para avaliar o modelo e gerar a matriz de confusão
+def evaluate_model(model, dataloader, criterion):
+    model.eval()  # Coloca o modelo em modo de avaliação
+    all_preds = []
+    all_labels = []
+    total_loss = 0.0
+
+    with torch.no_grad():  # Desabilita o cálculo de gradientes
+        for images, labels in dataloader:
+            # Forward pass
+            outputs = model(images)
+            preds = torch.round(outputs.squeeze())  # Arredonda as previsões para 0 ou 1
+            loss = criterion(outputs.squeeze(), labels.float())
+
+            # Armazena as previsões e rótulos
+            all_preds.extend(preds.cpu().numpy())
+            all_labels.extend(labels.cpu().numpy())
+            total_loss += loss.item()
+
+    # Calcula a matriz de confusão e a acurácia
+    conf_matrix = confusion_matrix(all_labels, all_preds)
+    accuracy = accuracy_score(all_labels, all_preds)
+    avg_loss = total_loss / len(dataloader)
+
+    return conf_matrix, accuracy, avg_loss
+
+# Avaliar o modelo após o treinamento
+conf_matrix, accuracy, avg_loss = evaluate_model(vgg16, MRI_dataloader, criterion)
+
+# Exibir os resultados
+print(f"Matriz de Confusão:\n{conf_matrix}")
+print(f"Acurácia: {accuracy * 100:.2f}%")
+print(f"Perda Média: {avg_loss:.4f}")
