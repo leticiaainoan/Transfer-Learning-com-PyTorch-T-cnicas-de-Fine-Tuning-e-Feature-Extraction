@@ -1,0 +1,63 @@
+#Transformação das imanges
+transform = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.ToTensor(),
+])
+
+#criação do nossa dataset
+MRI = datasets.ImageFolder(root='/content/Dataset/Brain Tumor MRI images', transform=transform)
+
+class0_indices = [i for i, (_, label) in enumerate(MRI) if label == 0]
+class1_indices = [i for i, (_, label) in enumerate(MRI) if label == 1]
+
+
+subset_indices = class0_indices[:1000] + class1_indices[:1000]
+
+
+subset_dataset = Subset(MRI, subset_indices)
+MRI_dataloader = DataLoader(subset_dataset, batch_size=32, shuffle=True)
+
+print("MRI Classes:", MRI.classes)
+
+#EXIBIR UMA IMAGEM DE CADA CLASSE
+
+class_indices = {label: [] for label in range(len(subset_dataset.dataset.classes))}
+for i in range(len(subset_dataset)):
+    _, label = subset_dataset[i]
+    class_indices[label].append(i)
+
+
+class0_image, _ = subset_dataset[class_indices[0][0]]
+class1_image, _ = subset_dataset[class_indices[1][0]]
+
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+
+axes[0].imshow(class0_image.permute(1, 2, 0))
+axes[0].set_title(subset_dataset.dataset.classes[0])
+axes[0].axis('off')
+
+axes[1].imshow(class1_image.permute(1, 2, 0))
+axes[1].set_title(subset_dataset.dataset.classes[1])
+axes[1].axis('off')
+
+plt.show()
+
+#exibir imagens
+
+def show_MRI_batch(dataloader, title="Batch of MRI Images"):
+    images, labels = next(iter(dataloader))
+    fig, axes = plt.subplots(4, 8, figsize=(15, 8))
+    fig.suptitle(title)
+
+    for i, ax in enumerate(axes.flatten()):
+        if i < len(images):
+            img = images[i].permute(1, 2, 0)  # Convert tensor image for plotting
+            ax.imshow(img)
+            ax.set_title(MRI.classes[labels[i]])
+            ax.axis('off')
+    plt.show()
+
+
+show_MRI_batch(MRI_dataloader)
+
