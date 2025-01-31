@@ -1,0 +1,15 @@
+#Download da database do Kaggle
+
+!pip install kaggle --upgrade
+
+from google.colab import files
+files.upload() # Fazer o upload do seu arquivo kaggle.json
+
+!mkdir -p ~/.kaggle
+!cp kaggle.json ~/.kaggle/
+!chmod 600 ~/.kaggle/kaggle.json
+
+!kaggle datasets download -d murtozalikhon/brain-tumor-multimodal-image-ct-and-mri
+
+!unzip brain-tumor-multimodal-image-ct-and-mri.zip
+
