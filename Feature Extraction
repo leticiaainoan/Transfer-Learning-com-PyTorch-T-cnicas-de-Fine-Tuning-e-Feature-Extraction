@@ -11,3 +11,65 @@ print(vgg16)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 vgg16 = vgg16.to(device)
+
+features = []
+labels = []
+
+
+with torch.no_grad():
+    for inputs, targets in MRI_dataloader:
+
+        inputs = inputs.to(device)
+        outputs = vgg16(inputs)
+        features.append(outputs)
+        labels.append(targets)
+
+
+features = torch.cat(features, dim=0)
+labels = torch.cat(labels, dim=0)
+
+feature_dataset = TensorDataset(features, labels)
+#ver a "cara" do nosso database de features
+
+for i in range(10):
+    features, labels = feature_dataset[i]
+    print(f"Dados {i + 1}:")
+    print("Features:", features)
+    print("Labels:", labels)
+    print("-" * 20) # Separador visual
+
+#ÁRVORE DE DECISÃO
+
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, confusion_matrix
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+X = feature_dataset.tensors[0].numpy()
+y = feature_dataset.tensors[1].numpy()
+
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+
+clf = DecisionTreeClassifier()
+clf.fit(X_train, y_train)
+
+y_pred = clf.predict(X_test)
+
+
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy: {accuracy}")
+
+
+cm = confusion_matrix(y_test, y_pred)
+
+
+plt.figure(figsize=(8, 6))
+sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
+            xticklabels=MRI.classes, yticklabels=MRI.classes)  # Assuming MRI.classes are defined
+plt.xlabel("Predicted Labels")
+plt.ylabel("True Labels")
+plt.title("Confusion Matrix")
+plt.show()
